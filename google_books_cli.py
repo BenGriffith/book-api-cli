@@ -15,10 +15,9 @@ SERVER_URL = f"http://{SERVER_IP}:{PORT}"
 BASE_URL = 'https://www.googleapis.com/books/v1/volumes'
 SEARCH_URL = BASE_URL + "?{}"
 BOOK_URL = BASE_URL + '/{}'
-SEARCH_RESULTS = 10
+SEARCH_RESULTS = 8
 NOT_FOUND = 'Not found'
 DEFAULT_LANGUAGE = "en"
-MAX_LOAD = 1000
 SLEEP_BETWEEN_REQUESTS = 2
 
 
@@ -39,7 +38,8 @@ def create_user(username, password):
     response = requests.post(f"{SERVER_URL}/users", json=user)
 
     if response.status_code == status.HTTP_201_CREATED:
-        typer.echo(f"Congratulations! {username} has been created!")
+        message_user_created = typer.style(f"Congratulations! {username} has been created!", fg=typer.colors.GREEN)
+        typer.echo(message_user_created)
         return True
 
     typer.echo(f"{response.json()['detail']}.")
@@ -63,10 +63,10 @@ def user_auth(username: str, password: str):
     return user, access_token
 
 
-def google_books_request(user_input, search_index):
+def search_phrase_request(search_phrase, search_index):
 
     params = {
-        "q": user_input,
+        "q": search_phrase,
         "startIndex": search_index,
         "maxResults": SEARCH_RESULTS,
         "langRestrict": DEFAULT_LANGUAGE
@@ -79,28 +79,17 @@ def google_books_request(user_input, search_index):
     return response
 
 
-def google_book_query(book_id):
+def book_request(book_id):
     query = BOOK_URL.format(book_id)
     return requests.get(query).json()
 
 
-def google_books_output(books):
-    books_dict = {}
+def print_books_to_create(books):
+    books_to_create = {}
     for i, book in enumerate(books, start=1):
-        print(f"{i}. {book.get('title')}, Written By {book.get('authors')}")
-        books_dict[str(i)] = book
-        #books_dict[i] = book
-    return books_dict
-
-
-def google_books_to_create():
-    books_to_create = typer.prompt(f"What books would you like to create?", type=set)
-    books_to_create = sorted([book for book in books_to_create if book != " "])
-    try:
-        validate_books(books_to_create)
-    except ValueError:
-        print("Invalid value. Please try again.")
-        return google_books_to_create()
+        message_book_details = typer.style(f"{i}. {book.get('title')}, Written By {book.get('authors')}", fg=typer.colors.MAGENTA)
+        typer.echo(message_book_details)
+        books_to_create[str(i)] = book
     return books_to_create
 
 
@@ -113,19 +102,35 @@ def validate_books(books):
         
         if book > SEARCH_RESULTS:
             raise ValueError()
+
+
+def choose_books_to_create():
+    message_create_prompt = typer.style("What books would you like to create?", fg=typer.colors.GREEN)
+    books_to_create = typer.prompt(message_create_prompt, type=set)
+    books_to_create = sorted([book for book in books_to_create if book not in [" ", ","]])
+
+    try:
+        validate_books(books_to_create)
+    except ValueError:
+        message_value_error = typer.style("Invalid value. Please try again.", fg=typer.colors.RED)
+        typer.echo(message_value_error)
+        return choose_books_to_create()
+
+    return books_to_create
         
 
-def google_books(response, user):
+def process_search_phrase_response(response, user):
 
     books = []
-    for google_book in response["items"]:
+    for book in response["items"]:
 
-        book_id = google_book.get("id")
-        google_book_response = google_book_query(book_id)
+        book_id = book.get("id")
+        book_response = book_request(book_id)
 
-        book_info = google_book_response.get("volumeInfo")
+        book_info = book_response.get("volumeInfo")
         book_title = book_info.get("title")
-        book_authors = ", ".join(book_info.get("authors", NOT_FOUND))
+        book_authors = NOT_FOUND if book_info.get("authors", NOT_FOUND) == NOT_FOUND else ", ".join(book_info.get("authors"))
+        #book_authors = 
         book_publisher = book_info.get("publisher", NOT_FOUND).strip('"')
         book_published_date = book_info.get("publishedDate", NOT_FOUND)
         book_description = book_info.get("description", NOT_FOUND)
@@ -155,77 +160,84 @@ def google_books(response, user):
     return books
 
 
-def google_books_to_create_request(books_final, books, access_token, books_loaded):
+def books_to_create_request(books_dict, user_selected_books, access_token):
 
-    for book in books:
+    for book in user_selected_books:
 
-        if book in books_final:
-            # print(books_final["1"])
-            # print(books_final[book])
-            book_response = requests.post(f"{SERVER_URL}/books", json=books_final[book], headers=access_token)
+        if book in books_dict:
+            book_response = requests.post(f"{SERVER_URL}/books", json=books_dict[book], headers=access_token)
 
             if book_response.status_code == status.HTTP_201_CREATED:
-                books_loaded += 1
-                print(f"{books_loaded}. {books_final[book]['title']}, By {books_final[book]['authors']}")
+                message_book_created = typer.style(f"-> {book}. {books_dict[book]['title']}, By {books_dict[book]['authors']} was created", fg=typer.colors.BLUE)
+                typer.echo(message_book_created)
             else:
-                print(book_response.json())
+                message_book_failed = typer.style(f"{book_response.status_code}: {book_response.json()['detail']}", fg=typer.colors.RED)
+                typer.echo(message_book_failed)
     
-    return books_loaded
+    return
+
+
+def continue_creating_books_prompt():
+    message_continue_prompt = typer.style("Would you like to continue creating books?", fg=typer.colors.GREEN)
+    continue_prompt = typer.prompt(message_continue_prompt, default="yes", type=str)
+    continue_prompt = continue_prompt.lower()
+
+    if continue_prompt not in ["y", "yes", "n", "no"]:
+        return continue_creating_books_prompt()
+    
+    return continue_prompt
+
+
+def user_logged_in(search_phrase, user, access_token):
+
+    if search_phrase is None:
+        message_search_phrase = typer.style("What books would you like to search for?", fg=typer.colors.GREEN)
+        search_phrase = typer.prompt(message_search_phrase)
+
+    search_index = 0
+    search_phrase_response = search_phrase_request(search_phrase, search_index)
+
+    while True:
+
+        books_to_create = process_search_phrase_response(search_phrase_response, user)
+
+        books_to_create_dict = print_books_to_create(books_to_create)
+
+        user_selected_books = choose_books_to_create()
+        
+        books_to_create_request(books_to_create_dict, user_selected_books, access_token)
+
+        search_index += SEARCH_RESULTS
+        sleep(SLEEP_BETWEEN_REQUESTS)
+
+        continue_prompt = continue_creating_books_prompt()
+        if continue_prompt in ["n", "no"]:
+            break
+
+        search_phrase_response = search_phrase_request(search_phrase, search_index)
+
+    return
     
 
 def main(
         new_user: Optional[bool] = typer.Option(default=False, prompt=True),
         username: Optional[str] = typer.Option(default=None, prompt=True), 
         password: Optional[str] = typer.Option(default=None, prompt=True, confirmation_prompt=True, hide_input=True), 
-        search: Optional[str] = typer.Option(default=None)):
+        search_phrase: Optional[str] = typer.Option(default=None)):
     
-    user = False
+    is_user_logged_in = False
     user_created = False
-    user_input = search
 
     if new_user:
         user_created = create_user(username, password)
 
     if user_created or (not new_user and (username and password)):
         user, access_token = user_auth(username, password)
+        is_user_logged_in = True if user else False
 
-    if user:
-
-        if search is None:
-            user_input = typer.prompt("What books would you like to search for?")
-
-        search_index = 0
-        books_loaded = 0
-        stop_load = False
-
-        google_books_response = google_books_request(user_input, search_index)
-
-        while True:
-
-            google_books_retrieved = google_books(google_books_response, user)
-
-            books_dict = google_books_output(google_books_retrieved)
-            #print(books_dict)
-
-            google_books_to_create_final = google_books_to_create()
-            print(google_books_to_create_final)
-            
-            google_books_to_create_request(books_dict, google_books_to_create_final, access_token, books_loaded)
-
-            if books_loaded >= MAX_LOAD:
-                stop_load = True
-                break
-
-            search_index += SEARCH_RESULTS
-            sleep(SLEEP_BETWEEN_REQUESTS)
-
-            google_books_response = google_books_request(user_input, search_index)
-
-        if stop_load:
-            typer.echo(f"All done! {books_loaded} books were created.")
+    if is_user_logged_in:
+        user_logged_in(search_phrase, user, access_token)
 
     
 if __name__ == "__main__":
     typer.run(main)
-    # a = typer.prompt("Test", type=set)
-    # print(sorted([b for b in a if b != " "]))
