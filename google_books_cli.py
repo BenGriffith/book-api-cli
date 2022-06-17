@@ -46,9 +46,9 @@ def create_user(username, password):
 
 
 def user_auth(username: str, password: str):
-    
+
     response = requests.post(
-            f"{SERVER_URL}/token", 
+            f"{SERVER_URL}/token",
             data={"username": username, "password": password},
             headers={"content-type": "application/x-www-form-urlencoded"}
             )
@@ -93,31 +93,29 @@ def print_books_to_create(books):
     return books_to_create
 
 
-def validate_books(books):
-    for book in books:
-        try:
-            book = int(book)
-        except ValueError:
-            raise
-        
-        if book > SEARCH_RESULTS:
-            raise ValueError()
+def _filter_non_digit_books(books):
+    return  [book for book in books if str(book).isdigit()]
 
 
-def choose_books_to_create():
-    message_create_prompt = typer.style("What books would you like to create?", fg=typer.colors.GREEN)
-    books_to_create = typer.prompt(message_create_prompt, type=set)
-    books_to_create = sorted([book for book in books_to_create if book not in [" ", ","]])
+def _has_books_outside_of_maxrange(books) -> list[str]:
+    return [idx for idx in books if int(idx) > SEARCH_RESULTS]
 
-    try:
-        validate_books(books_to_create)
-    except ValueError:
-        message_value_error = typer.style("Invalid value. Please try again.", fg=typer.colors.RED)
+
+class WrongBookSelectedException(Exception):
+    pass
+
+
+def choose_books_to_create(books):
+    books_to_create = _filter_non_digit_books(books)
+    out_of_range_digits = _has_books_outside_of_maxrange(books_to_create)
+    if out_of_range_digits:
+        error = f"{', '.join(out_of_range_digits)} are out of range, please try again."
+        message_value_error = typer.style(error, fg=typer.colors.RED)
         typer.echo(message_value_error)
-        return choose_books_to_create()
+        raise WrongBookSelectedException(error)
 
     return books_to_create
-        
+
 
 def process_search_phrase_response(response, user):
 
@@ -130,14 +128,14 @@ def process_search_phrase_response(response, user):
         book_info = book_response.get("volumeInfo")
         book_title = book_info.get("title")
         book_authors = NOT_FOUND if book_info.get("authors", NOT_FOUND) == NOT_FOUND else ", ".join(book_info.get("authors"))
-        #book_authors = 
+        #book_authors =
         book_publisher = book_info.get("publisher", NOT_FOUND).strip('"')
         book_published_date = book_info.get("publishedDate", NOT_FOUND)
         book_description = book_info.get("description", NOT_FOUND)
         book_page_count = book_info.get("pageCount", 0)
         book_average_rating = book_info.get("averageRating", 0)
         book_language = book_info.get("language", NOT_FOUND)
-        
+
         if book_language != DEFAULT_LANGUAGE:
             continue
 
@@ -173,7 +171,7 @@ def books_to_create_request(books_dict, user_selected_books, access_token):
             else:
                 message_book_failed = typer.style(f"{book_response.status_code}: {book_response.json()['detail']}", fg=typer.colors.RED)
                 typer.echo(message_book_failed)
-    
+
     return
 
 
@@ -184,7 +182,7 @@ def continue_creating_books_prompt():
 
     if continue_prompt not in ["y", "yes", "n", "no"]:
         return continue_creating_books_prompt()
-    
+
     return continue_prompt
 
 
@@ -203,8 +201,17 @@ def user_logged_in(search_phrase, user, access_token):
 
         books_to_create_dict = print_books_to_create(books_to_create)
 
-        user_selected_books = choose_books_to_create()
-        
+        while True:
+            message_create_prompt = typer.style("What books would you like to create?", fg=typer.colors.GREEN)
+            books_selected_by_user = typer.prompt(message_create_prompt, type=str)
+            books_to_create = set(books_selected_by_user.split(","))
+            try:
+                user_selected_books = choose_books_to_create(books_to_create)
+                break
+            except WrongBookSelectedException as exc:
+                print(exc)
+                continue
+
         books_to_create_request(books_to_create_dict, user_selected_books, access_token)
 
         search_index += SEARCH_RESULTS
@@ -217,20 +224,21 @@ def user_logged_in(search_phrase, user, access_token):
         search_phrase_response = search_phrase_request(search_phrase, search_index)
 
     return
-    
+
 
 def main(
         new_user: Optional[bool] = typer.Option(default=False, prompt=True),
-        username: Optional[str] = typer.Option(default=None, prompt=True), 
-        password: Optional[str] = typer.Option(default=None, prompt=True, confirmation_prompt=True, hide_input=True), 
+        username: Optional[str] = typer.Option(default=None, prompt=True),
+        password: Optional[str] = typer.Option(default=None, prompt=True, confirmation_prompt=True, hide_input=True),
         search_phrase: Optional[str] = typer.Option(default=None)):
-    
+
     is_user_logged_in = False
     user_created = False
 
     if new_user:
         user_created = create_user(username, password)
 
+    # TODO: only repeat pw for signup
     if user_created or (not new_user and (username and password)):
         user, access_token = user_auth(username, password)
         is_user_logged_in = True if user else False
@@ -238,6 +246,6 @@ def main(
     if is_user_logged_in:
         user_logged_in(search_phrase, user, access_token)
 
-    
+
 if __name__ == "__main__":
     typer.run(main)
