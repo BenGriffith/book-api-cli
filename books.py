@@ -4,6 +4,8 @@ import typer
 from fastapi import status
 
 import config
+from exceptions import WrongBookSelectedException
+
 
 def search_phrase_request(search_phrase, search_index):
 
@@ -39,27 +41,23 @@ def print_books_to_create(books):
     return books_to_create
 
 
-def validate_books(books):
-
-    for book_id in books:
-        try:
-            book_id = int(book_id)
-        except ValueError:
-            raise
-        
-        if book_id > config.NUM_SEARCH_RESULTS:
-            raise ValueError()
+def _filter_non_digit_books(books):
+    return sorted([book for book in books if str(book).isdigit()])
 
 
-def choose_books_to_create(message):
+def _has_books_outside_of_maxrange(books) -> list[str]:
+    return [idx for idx in books if int(idx) > config.NUM_SEARCH_RESULTS]
 
-    books_to_create = sorted([book for book in message if book not in [" ", ","]])
 
-    try:
-        validate_books(books_to_create)
-    except ValueError:
-        message_value_error = typer.style("Invalid value. Please use numeric values from the list of books above.", fg=typer.colors.RED)
-        typer.echo(message_value_error)
+def choose_books_to_create(books):
+
+    books_to_create = _filter_non_digit_books(books)
+    out_of_range_digits = _has_books_outside_of_maxrange(books_to_create)
+
+    if out_of_range_digits:
+        singular_plural = "are" if len(out_of_range_digits) > 1 else "is"
+        error = f"{', '.join(out_of_range_digits)} {singular_plural} out of range, please try again."
+        raise WrongBookSelectedException(error)
 
     return books_to_create
         
@@ -112,20 +110,10 @@ def books_to_create_request(books_dict, user_selected_books, access_token):
             book_response = requests.post(f"{config.SERVER_URL}/books", json=books_dict[book], headers=access_token)
 
             if book_response.status_code == status.HTTP_201_CREATED:
-                message_book_created = typer.style(f"-> {book}. {books_dict[book]['title']}, By {books_dict[book]['authors']} was created", fg=typer.colors.CYAN)
+                message_book_created = typer.style(f"CREATED: {book}. {books_dict[book]['title']}, By {books_dict[book]['authors']}", fg=typer.colors.CYAN)
                 typer.echo(message_book_created)
             else:
                 message_book_failed = typer.style(f"{book_response.status_code}: {book_response.json()['detail']}", fg=typer.colors.RED)
                 typer.echo(message_book_failed)
     
     return
-
-
-def continue_creating_books(message):
-
-    continue_prompt = message.lower()
-
-    if continue_prompt not in config.POSITIVE_REPLY + config.NEGATIVE_REPLY:
-        return continue_creating_books()
-    
-    return continue_prompt

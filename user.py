@@ -19,9 +19,11 @@ def create_user(username, email, first_name, last_name, password):
     if response.status_code == status.HTTP_201_CREATED:
         message_user_created = typer.style(f"Congratulations! {username} has been created!", fg=typer.colors.GREEN)
         typer.echo(message_user_created)
-        return
+        return username, password
 
-    typer.echo(f"{response.json()['detail']}.")
+    message_detail = typer.style(f"{response.json()['detail']}.", fg=typer.colors.RED)
+    typer.echo(message_detail)
+    return False, False
 
 
 def user_auth(username: str, password: str):

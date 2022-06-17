@@ -1,0 +1,4 @@
+
+
+class WrongBookSelectedException(Exception):
+    pass
