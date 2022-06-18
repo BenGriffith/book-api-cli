@@ -41,25 +41,31 @@ def print_books_to_create(books):
     return books_to_create
 
 
-def _filter_non_digit_books(books):
-    return sorted([book for book in books if str(book).isdigit()])
+def _non_digit_books_entries(books):
+    return [book for book in books if not str(book).isdigit()]
 
 
-def _has_books_outside_of_maxrange(books) -> list[str]:
+def _books_outside_of_range(books) -> list[str]:
     return [idx for idx in books if int(idx) > config.NUM_SEARCH_RESULTS]
 
 
 def choose_books_to_create(books):
 
-    books_to_create = _filter_non_digit_books(books)
-    out_of_range_digits = _has_books_outside_of_maxrange(books_to_create)
+    non_digit_entries = _non_digit_books_entries(books)
+
+    if non_digit_entries:
+        singular_plural = "are not digits" if len(non_digit_entries) > 1 else "is not a digit"
+        error = f"{', '.join(non_digit_entries)} {singular_plural}, please try again."
+        raise WrongBookSelectedException(error)
+
+    out_of_range_digits = _books_outside_of_range(books)
 
     if out_of_range_digits:
         singular_plural = "are" if len(out_of_range_digits) > 1 else "is"
         error = f"{', '.join(out_of_range_digits)} {singular_plural} out of range, please try again."
         raise WrongBookSelectedException(error)
 
-    return books_to_create
+    return sorted([book for book in books])
         
 
 def process_search_phrase_response(response, user):
