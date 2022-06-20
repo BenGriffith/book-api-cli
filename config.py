@@ -1,7 +1,8 @@
+from ctypes import cast
 from decouple import config
 
-SERVER_IP = config("SERVER_IP")
-PORT = config("PORT")
+SERVER_IP = config("SERVER_IP", cast=str)
+PORT = config("PORT", cast=str)
 SERVER_URL = f"http://{SERVER_IP}:{PORT}"
 
 BASE_URL = 'https://www.googleapis.com/books/v1/volumes'
