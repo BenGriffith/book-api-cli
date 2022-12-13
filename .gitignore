@@ -1,6 +1,3 @@
 # created by virtualenv automatically
-__pycache__
-bin/
-lib/
-.env
-pyvenv.cfg
+venv
+yourbooks/.env
