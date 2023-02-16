@@ -32,8 +32,6 @@ Here are a few sample screenshots:
 
 ## Setup
 
-Before continuing with the steps outlined below, ensure the setup outlined [here](https://github.com/BenGriffith/book-api#setup) is complete.
-
 To run this project, follow the steps below:
 ```
 $ git clone https://github.com/BenGriffith/book-api-cli.git
@@ -45,12 +43,7 @@ $ cd yourbooks
 $ cp .env-template .env
 ```
 
-If you would like to update the `SERVER_IP`, open .env:
-```
-SERVER_IP=yourbooks.bengriffith.dev ## Can be changed
-```
-
-Finally, make certain you are in the project root directory and then execute the following command:
+Make certain you are in the project root directory and then execute the following command:
 ```
 $ python -m yourbooks
 ```
