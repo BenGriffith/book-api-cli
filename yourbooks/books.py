@@ -113,7 +113,7 @@ def books_to_create_request(books_dict, user_selected_books, access_token):
     for book in user_selected_books:
 
         if book in books_dict:
-            book_response = requests.post(f"{config.SERVER_URL}/books", json=books_dict[book], headers=access_token)
+            book_response = requests.post(f"{config.SERVER_URL}/books/", json=books_dict[book], headers=access_token)
 
             if book_response.status_code == status.HTTP_201_CREATED:
                 message_book_created = typer.style(f"CREATED: {book}. {books_dict[book]['title']}, By {books_dict[book]['authors']}", fg=typer.colors.CYAN)

@@ -14,7 +14,7 @@ def create_user(username, email, first_name, last_name, password):
         "password": password,
     }
 
-    response = requests.post(f"{SERVER_URL}/users", json=user)
+    response = requests.post(f"{SERVER_URL}/users/", json=user)
 
     if response.status_code == status.HTTP_201_CREATED:
         message_user_created = typer.style(f"Congratulations! {username} has been created!", fg=typer.colors.GREEN)

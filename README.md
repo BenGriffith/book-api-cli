@@ -2,7 +2,7 @@
 
 Command Line Interface program built for a FastAPI application allowing individuals to manage their reading lists from an ever-growing books database. To learn more about the FastAPI application, please check it out [here](https://github.com/BenGriffith/book-api).
 
-This CLI was built using Typer and leverages Google Books API. Using the CLI, you can:
+This CLI was built using Typer and leverages Google Books API. It currently serves the FastAPI application hosted at https://yourbooks.bengriffith.dev. Using the CLI, you can:
 
 - Create users
 - Login as an existing user
@@ -45,10 +45,9 @@ $ cd yourbooks
 $ cp .env-template .env
 ```
 
-Open .env and populate the environment variables:
+If you would like to update the `SERVER_IP`, open .env:
 ```
-SERVER_IP=localhost ## Can be changed
-PORT=8000 ## Can be changed
+SERVER_IP=yourbooks.bengriffith.dev ## Can be changed
 ```
 
 Finally, make certain you are in the project root directory and then execute the following command:
