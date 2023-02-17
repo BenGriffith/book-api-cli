@@ -1,0 +1,20 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "yourbooks"
+authors = [
+  {name = "Ben Griffith"}
+]
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = ["License :: OSI Approved :: MIT License"]
+keywords = ["books", "reading", "Google Books API"]
+dynamic = ["version", "description"]
+
+[tool.flit.module]
+name = "yourbooks"
+
+[project.urls]
+Source = "https://github.com/bengriffith/book-api-cli"
