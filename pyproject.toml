@@ -7,7 +7,7 @@ name = "yourbooks"
 authors = [
   {name = "Ben Griffith"}
 ]
-readme = "README.md"
+readme = "README-PyPI.md"
 requires-python = ">=3.9"
 classifiers = ["License :: OSI Approved :: MIT License"]
 keywords = ["books", "reading", "Google Books API"]
