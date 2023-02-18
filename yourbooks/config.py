@@ -1,9 +1,4 @@
-from ctypes import cast
-from decouple import config
-
-SERVER_IP = config("SERVER_IP", cast=str)
-SERVER_URL = f"https://{SERVER_IP}"
-
+SERVER_URL = f"https://yourbooks.bengriffith.dev"
 BASE_URL = 'https://www.googleapis.com/books/v1/volumes'
 SEARCH_URL = BASE_URL + "?{}"
 BOOK_URL = BASE_URL + '/{}'

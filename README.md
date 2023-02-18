@@ -39,8 +39,6 @@ $ cd book-api-cli
 $ python3 -m virtualenv venv
 $ source venv/bin/activate
 $ pip install -r requirements.txt
-$ cd yourbooks
-$ cp .env-template .env
 ```
 
 Make certain you are in the project root directory and then execute the following command:
