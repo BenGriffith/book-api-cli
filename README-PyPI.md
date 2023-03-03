@@ -13,14 +13,6 @@ This CLI was built using Typer and leverages Google Books API. It currently serv
 
 To run this project, follow the steps below:
 ```
-$ git clone https://github.com/BenGriffith/book-api-cli.git
-$ cd book-api-cli
-$ python3 -m virtualenv venv
-$ source venv/bin/activate
-$ pip install -r requirements.txt
-```
-
-Make certain you are in the project root directory and then execute the following command:
-```
+$ pip install yourbooks
 $ python -m yourbooks
 ```

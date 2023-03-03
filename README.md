@@ -34,6 +34,12 @@ Here are a few sample screenshots:
 
 To run this project, follow the steps below:
 ```
+$ pip install yourbooks
+$ python -m yourbooks
+```
+
+Alternatively:
+```
 $ git clone https://github.com/BenGriffith/book-api-cli.git
 $ cd book-api-cli
 $ python3 -m virtualenv venv
