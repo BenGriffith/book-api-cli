@@ -1,4 +1,4 @@
-SERVER_URL = f"https://yourbooks.bengriffith.dev"
+SERVER_URL = "http://localhost:8000/docs"
 BASE_URL = 'https://www.googleapis.com/books/v1/volumes'
 SEARCH_URL = BASE_URL + "?{}"
 BOOK_URL = BASE_URL + '/{}'
