@@ -2,7 +2,7 @@
 
 Command Line Interface program built for a FastAPI application allowing individuals to manage their reading lists from an ever-growing books database. To learn more about the FastAPI application, please check it out [here](https://github.com/BenGriffith/book-api).
 
-This CLI was built using Typer and leverages Google Books API. It currently serves the FastAPI application hosted [here](https://yourbooks.bengriffith.dev/docs). Using the CLI, you can:
+This CLI was built using Typer and leverages Google Books API. Using the CLI, you can:
 
 - Create users
 - Login as an existing user
@@ -33,12 +33,6 @@ Here are a few sample screenshots:
 ## Setup
 
 To run this project, follow the steps below:
-```
-$ pip install yourbooks
-$ python -m yourbooks
-```
-
-Alternatively:
 ```
 $ git clone https://github.com/BenGriffith/book-api-cli.git
 $ cd book-api-cli
